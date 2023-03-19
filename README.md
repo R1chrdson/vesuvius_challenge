@@ -1,2 +1,3 @@
-# vesuvius_challenge
-The Vesuvius Challenge - Ink Detection kaggle competition from the "UCU dropouts" team
+# The Vesuvius Challenge
+**Code base for Vesuvius Challenge kaggle competition.  
+This repository contains codebase for the competition as well as setup for experiments version control for "UCU dropouts" team**
