@@ -2,3 +2,6 @@ kaggle==1.5.13
 python-dotenv==1.0.0
 pylint==2.17.1
 black==23.1.0
+torch==2.0.0
+torchaudio==2.0.1
+torchvision==0.15.1

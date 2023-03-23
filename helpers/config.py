@@ -65,7 +65,7 @@ class AppConfig(object):
     def __repr__(self):
         attrs = vars(self)
         prop_values = {
-            prop_name: getattr(self, prop_name)
+            prop_name: str(getattr(self, prop_name))
             for prop_name in dir(self)
             if isinstance(getattr(type(self), prop_name, None), property)
         }
