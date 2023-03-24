@@ -1,7 +1,6 @@
 import logging
 
-from helpers.config import Config
-
+from .config import Config
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()

@@ -2,11 +2,12 @@
 Configuration class for the project
 """
 
-import inspect
+import json
 import os
 from pathlib import Path
 from typing import Union, get_type_hints
 
+import torch
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -26,7 +27,7 @@ def _parse_bool(val: Union[str, bool]) -> bool:
     return val if isinstance(val, bool) else val.lower() in ["true", "yes", "1"]
 
 
-class AppConfig(object):
+class AppConfig:
     """
     General configuration class for the project
     Maps environment variables to class attributes
@@ -35,6 +36,10 @@ class AppConfig(object):
     SEED: int = 777
     LOG_LEVEL: str
     ENVIRONMENT: str
+    TILE_SIZE: int
+    BATCH_SIZE: int
+    EPOCHS: int
+    MODEL: str
 
     def __init__(self, env):
         for field in self.__annotations__:  # pylint: disable=no-member
@@ -58,19 +63,31 @@ class AppConfig(object):
                 ) from err
 
     @property
+    def NUM_WORKERS(self) -> int:
+        """Defines the number of workers for the DataLoader"""
+        return os.cpu_count() or 0
+
+    @property
+    def DEVICE(self) -> torch.device:
+        """Defines the device to use for training"""
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    @property
     def DATASET_PATH(self) -> Path:
         """Defines the path to the dataset logic"""
         return Path(dataset_path_map[self.ENVIRONMENT])
 
     def __repr__(self):
-        attrs = vars(self)
-        prop_values = {
-            prop_name: str(getattr(self, prop_name))
-            for prop_name in dir(self)
-            if isinstance(getattr(type(self), prop_name, None), property)
+        attrs = {
+            **vars(self),
+            **{
+                prop_name: str(getattr(self, prop_name))
+                for prop_name in dir(self)
+                if isinstance(getattr(type(self), prop_name, None), property)
+            },
         }
-        attrs.update(prop_values)
-        return f"{type(self).__name__}({attrs})"
+        attrs_str = json.dumps(attrs, indent=4, sort_keys=True)
+        return f"{type(self).__name__}({attrs_str})"
 
 
 Config = AppConfig(os.environ)

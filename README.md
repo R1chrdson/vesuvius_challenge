@@ -15,6 +15,7 @@ First of all you will need to create python virtual environment and install nece
 ```
 python3 -m venv venv
 source venv/bin/activate
+pip install -e . --no-deps
 pip install -r requirements.txt
 ```
 
