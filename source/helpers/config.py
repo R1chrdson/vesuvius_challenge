@@ -10,6 +10,8 @@ from typing import Union, get_type_hints
 import torch
 from dotenv import load_dotenv
 
+from .serialization import ConfigEncoder
+
 load_dotenv()
 
 
@@ -40,6 +42,9 @@ class AppConfig:
     BATCH_SIZE: int
     EPOCHS: int
     MODEL: str
+    LEARNING_RATE: float
+    WORKING_DIR: Path
+    PATIENCE: int
 
     def __init__(self, env):
         for field in self.__annotations__:  # pylint: disable=no-member
@@ -86,7 +91,7 @@ class AppConfig:
                 if isinstance(getattr(type(self), prop_name, None), property)
             },
         }
-        attrs_str = json.dumps(attrs, indent=4, sort_keys=True)
+        attrs_str = json.dumps(attrs, indent=4, sort_keys=True, cls=ConfigEncoder)
         return f"{type(self).__name__}({attrs_str})"
 
 
