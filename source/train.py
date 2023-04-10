@@ -43,8 +43,9 @@ if __name__ == "__main__":
         with tqdm(len(train_loader), desc="Train") as pbar:
             for batch in train_loader:
                 x, y = batch
-                x = x.to(Config.DEVICE).float().unsqueeze(1)
-                y = y.to(Config.DEVICE).float().unsqueeze(1)
+                x = x.to(Config.DEVICE)
+                y = y.to(Config.DEVICE)
+                print("x", x.shape, "y", y.shape)
                 optimizer.zero_grad()
                 y_hat = model(x)
                 loss = criterion(y_hat, y)
