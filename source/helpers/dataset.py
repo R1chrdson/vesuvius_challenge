@@ -33,3 +33,25 @@ class VesuviusDummyDataSet(Dataset):
         subvolume = (self.volume_data[index] / 255.0).astype(np.float32)
         label = np.expand_dims(self.mask[index], axis=0)
         return torch.from_numpy(subvolume).unsqueeze(0), torch.FloatTensor(label)
+
+
+class VesuviusOriginalDataSet(Dataset):
+    """This dataset uses original data from Vesuvius Challenge.
+    No optimizations, processing, and separations applied.
+    """
+
+    def __init__(self):
+        self.volume_data = None
+        self.mask_none = None
+        self._load_data()
+
+    def _load_data(self):
+        train_data_path = Config.DATASET_PATH / "train"
+        for i, fragment in train_data_path.iterdir():
+            print(fragment)
+
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    def __getitem__(self, index):
+        raise NotImplementedError
