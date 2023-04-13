@@ -43,7 +43,7 @@ class AppConfig:
     EPOCHS: int
     MODEL: str
     LEARNING_RATE: float
-    WORKING_DIR: Path
+    CHECKPOINTS_DIR: Path
     PATIENCE: int
 
     def __init__(self, env):

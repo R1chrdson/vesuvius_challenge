@@ -24,12 +24,12 @@ class VesuviusDummyDataSet(Dataset):
         )
 
         # 1 if average of all layers per pixel is greater than 128, 0 otherwise
-        self.mask = np.mean(self.volume_data, axis=(1)) > 128
+        self.mask = np.mean(self.volume_data, axis=(1, 2, 3)) > 128
 
     def __len__(self) -> int:
         return self.volume_data.shape[0]
 
     def __getitem__(self, index):
-        subvolume = self.volume_data[index] / 255.
-        label = self.mask[index]
-        return torch.from_numpy(subvolume).unsqueeze(0), torch.FloatTensor([label])
+        subvolume = (self.volume_data[index] / 255.0).astype(np.float32)
+        label = np.expand_dims(self.mask[index], axis=0)
+        return torch.from_numpy(subvolume).unsqueeze(0), torch.FloatTensor(label)
