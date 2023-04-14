@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 
 from .config import Config
@@ -12,31 +11,30 @@ class EarlyStopping:
         self.counter = 0
         self.best_score = None
         self.early_stop = False
-        self.val_loss_min = np.Inf
 
-    def __call__(self, val_loss, model, epoch):
-        score = -val_loss
-
+    def __call__(self, score, model, comment=""):
         if self.best_score is None:
             self.best_score = score
-            self.save_checkpoint(val_loss, model, epoch)
-        elif score < self.best_score:
+            self.save_checkpoint(model, comment)
+        elif score <= self.best_score:
             self.counter += 1
             logger.info(f"EarlyStopping counter: {self.counter} out of {self.patience}")
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
+            if self.verbose:
+                logger.info(
+                    f"Score increased ({self.best_score:.4f} --> {score:.4f}).  Saving model ..."
+                )
             self.best_score = score
-            self.save_checkpoint(val_loss, model, epoch)
+            self.save_checkpoint(model, comment)
             self.counter = 0
 
-    def save_checkpoint(self, val_loss, model, epoch):
+    def save_checkpoint(self, model, comment=""):
         """Saves model when validation loss decrease."""
+        model_checkpoint_components = [Config.MODEL, "checkpoint.pt"]
+        if comment:
+            model_checkpoint_components.insert(1, comment)
+        model_checkpoint_name = "_".join(model_checkpoint_components)
 
-        if self.verbose:
-            logger.info(
-                f"Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ..."
-            )
-
-        torch.save(model.state_dict(), Config.CHECKPOINTS_DIR / f"{Config.MODEL}_{epoch}_{self.best_score}_checkpoint.pt")
-        self.val_loss_min = val_loss
+        torch.save(model.state_dict(), Config.CHECKPOINTS_DIR / model_checkpoint_name)

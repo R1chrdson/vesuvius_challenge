@@ -1,10 +1,11 @@
 import numpy as np
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, SubsetRandomSampler
 from torch.nn import BCEWithLogitsLoss
 from torch.optim import Adam
 from tqdm import trange, tqdm
 from torchmetrics import MetricCollection
-from torchmetrics.classification import BinaryFBetaScore
+from torchmetrics.classification import BinaryFBetaScore, BinaryAccuracy
+from sklearn.model_selection import KFold
 
 from source.helpers.config import Config
 from source.helpers.dataset import VesuviusDummyDataSet, VesuviusOriginalDataSet
@@ -44,19 +45,19 @@ def train_epoch(data_loader, model, optimizer, criterion, metrics):
         for batch in data_loader:
             loss_value = train_batch(batch, model, optimizer, criterion, metrics)
             losses.append(loss_value)
-            pbar.set_postfix(loss=loss_value)
+            pbar.set_postfix(loss=f'{loss_value:5.3f}')
             pbar.update()
 
-        pbar.set_postfix(
-            loss=loss_value,
+        metric_data = {
+            "loss": np.mean(losses),
             **{
                 metric_name: metric_value.cpu().item()
                 for metric_name, metric_value in metrics.compute().items()
             },
-        )
-
+        }
+        pbar.set_postfix(metric_data)
         metrics.reset()
-    return np.mean(losses)
+    return metric_data
 
 
 def test_epoch(data_loader, model, criterion, metrics):
@@ -66,19 +67,45 @@ def test_epoch(data_loader, model, criterion, metrics):
         for batch in data_loader:
             loss_value = val_batch(batch, model, criterion, metrics)
             losses.append(loss_value)
-            pbar.set_postfix(loss=loss_value)
+            pbar.set_postfix(loss=f'{loss_value:5.3f}')
             pbar.update()
 
-        pbar.set_postfix(
-            loss=loss_value,
+        metric_data = {
+            "loss": np.mean(losses),
             **{
                 metric_name: metric_value.cpu().item()
                 for metric_name, metric_value in metrics.compute().items()
             },
-        )
-
+        }
+        pbar.set_postfix(metric_data)
         metrics.reset()
-    return np.mean(losses)
+    return metric_data
+
+
+def fit_model(train_loader, test_loader, comment=""):
+    model = MODELS[Config.MODEL]().to(Config.DEVICE)
+    criterion = BCEWithLogitsLoss()
+    optimizer = Adam(model.parameters(), lr=Config.LEARNING_RATE)
+    early_stopping = EarlyStopping(patience=Config.PATIENCE, verbose=True)
+
+    metrics = MetricCollection([
+        BinaryAccuracy(),
+        BinaryFBetaScore(beta=0.5),
+
+    ])
+    train_metrics = metrics.clone().to(Config.DEVICE)
+    test_metrics = metrics.clone().to(Config.DEVICE)
+
+    for _ in trange(Config.EPOCHS, desc="Epoch"):
+        train_epoch(train_loader, model, optimizer, criterion, train_metrics)
+        test_metric_data = test_epoch(test_loader, model, criterion, test_metrics)
+
+        early_stopping(test_metric_data["BinaryFBetaScore"], model, comment)
+        if early_stopping.early_stop:
+            logger.info("Early stopping")
+            break
+
+    return early_stopping.best_score
 
 
 def train():
@@ -104,24 +131,55 @@ def train():
         shuffle=False,
     )
 
-    model = MODELS[Config.MODEL]().to(Config.DEVICE)
-    criterion = BCEWithLogitsLoss()
-    optimizer = Adam(model.parameters(), lr=Config.LEARNING_RATE)
-    early_stopping = EarlyStopping(patience=Config.PATIENCE, verbose=True)
+    fit_model(train_loader, test_loader)
 
-    metrics = MetricCollection([BinaryFBetaScore(beta=0.5)]).to(Config.DEVICE)
-    train_metrics = metrics.clone()
-    test_metrics = metrics.clone()
 
-    for epoch in trange(Config.EPOCHS, desc="Epoch"):
-        train_epoch(train_loader, model, optimizer, criterion, train_metrics)
-        test_loss = test_epoch(test_loader, model, criterion, test_metrics)
+def train_with_cv():
+    """
+    Train model with cross validation.
+    Use `Config.CV_FOLDS` to set number of folds. Default value is 5.
+    Use `Config.FOLD_IDX` to set fold index to train. Default value of -1 means train all folds
+    """
+    logger.info(f"Environment: {Config}")
+    logger.info("Starting training with cross validation")
+    seed_everything()
+    prepare_folders()
 
-        early_stopping(test_loss, model, epoch)
-        if early_stopping.early_stop:
-            logger.info("Early stopping")
-            break
+    dataset = VesuviusOriginalDataSet()
+    splits = KFold(n_splits=Config.CV_FOLDS, shuffle=True, random_state=Config.SEED)
+
+    fold_idxs = list(splits.split(np.arange(len(dataset))))
+
+    if Config.FOLD_IDX != -1:
+        fold_idxs = [fold_idxs[Config.FOLD_IDX]]
+
+    fold_scores = []
+    for fold, (train_idx, val_idx) in enumerate(
+        splits.split(np.arange(len(dataset))), 1
+    ):
+        logger.info(f"Fold {fold}")
+        train_sampler = SubsetRandomSampler(train_idx)
+        test_sampler = SubsetRandomSampler(val_idx)
+
+        train_loader = DataLoader(
+            dataset,
+            sampler=train_sampler,
+            batch_size=Config.BATCH_SIZE,
+            num_workers=Config.NUM_WORKERS,
+            pin_memory=True,
+        )
+        test_loader = DataLoader(
+            dataset,
+            sampler=test_sampler,
+            batch_size=Config.BATCH_SIZE,
+            num_workers=Config.NUM_WORKERS,
+        )
+
+        fold_score = fit_model(train_loader, test_loader, comment=f"fold_{fold}")
+        fold_scores.append(fold_score)
+
+    print(f"CV Score: {np.mean(fold_scores)}")
 
 
 if __name__ == "__main__":
-    train()
+    train_with_cv()
