@@ -74,8 +74,8 @@ class VesuviusOriginalDataSet(Dataset):
     def _load_fragment(self, fragment_path: Path):
         slice_paths = sorted(list((fragment_path / "surface_volume").glob("*.tif")))
         labels_path = fragment_path / "inklabels.png"
-        labels_img = np.array(Image.open(labels_path), dtype=bool)
-        mask = np.array(Image.open(fragment_path / "mask.png"), dtype=bool)
+        labels_img = cv2.imread(str(labels_path), cv2.IMREAD_GRAYSCALE).astype(bool)
+        mask = cv2.imread(str(fragment_path / "mask.png"), cv2.IMREAD_GRAYSCALE).astype(bool)
         voxels = []
         for slice_path in tqdm(slice_paths, leave=False):
             # In this case, we use cv2 to load image, because it's faster than PIL

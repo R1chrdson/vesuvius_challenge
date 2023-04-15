@@ -48,7 +48,7 @@ class AppConfig:
     PATIENCE: int
     CV_FOLDS: int = 5
     FOLD_IDX: int = -1
-    WANDB_API: str
+    WANDB_API_KEY: str
 
     def __init__(self, env):
         for field in self.__annotations__:  # pylint: disable=no-member
@@ -86,6 +86,7 @@ class AppConfig:
         """Defines the path to the dataset logic"""
         return Path(dataset_path_map[self.ENVIRONMENT])
 
+    @property
     def WANDB_PROJECT(self) -> str:
         return "Vesuvius Challenge"
 
@@ -100,7 +101,7 @@ class AppConfig:
         }
 
         # Remove private attributes
-        attrs.pop("WANDB_API", None)
+        attrs.pop("WANDB_API_KEY", None)
 
         attrs_str = json.dumps(attrs, indent=4, sort_keys=True, cls=ConfigEncoder)
         return f"{type(self).__name__}({attrs_str})"

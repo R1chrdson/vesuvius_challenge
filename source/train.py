@@ -14,7 +14,7 @@ from source.helpers.logger import logger
 from source.helpers.utils import seed_everything, prepare_folders
 from source.models import MODELS
 from source.helpers.early_stopper import EarlyStopping
-
+from datetime import datetime
 
 def train_batch(batch, model, optimizer, criterion, metrics):
     x, y = batch
@@ -100,7 +100,7 @@ def fit_model(train_loader, test_loader, comment=""):
     wandb.init(
         project=Config.WANDB_PROJECT,
         config={key.lower(): Config[key] for key in TRAINING_KEYS},
-        tags=[Config.MODEL, comment, Config.ENVIRONMENT]
+        tags=[Config.MODEL, comment, Config.ENVIRONMENT],
     )
 
     for _ in trange(Config.EPOCHS, desc="Epoch"):
@@ -111,12 +111,21 @@ def fit_model(train_loader, test_loader, comment=""):
             **{f"train/{key}": value for key, value in train_metric_data.items()},
             **{f"test/{key}": value for key, value in test_metric_data.items()},
         })
-        
+
         early_stopping(test_metric_data["BinaryFBetaScore"], model, comment)
         if early_stopping.early_stop:
             logger.info("Early stopping")
             break
 
+    artifact = wandb.Artifact(Config.MODEL, type="model")
+    artifact.add_file(early_stopping.best_model_checkpoint_path)
+    wandb.log_artifact(
+        artifact,
+        metadata={
+            "train_metrics": train_metric_data,
+            "test_metrics": test_metric_data,
+        }
+    )
     wandb.finish()
     return early_stopping.best_score
 

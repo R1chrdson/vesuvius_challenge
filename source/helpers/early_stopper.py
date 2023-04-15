@@ -11,6 +11,7 @@ class EarlyStopping:
         self.counter = 0
         self.best_score = None
         self.early_stop = False
+        self.best_model_checkpoint_path = None
 
     def __call__(self, score, model, comment=""):
         if self.best_score is None:
@@ -37,4 +38,5 @@ class EarlyStopping:
             model_checkpoint_components.insert(1, comment)
         model_checkpoint_name = "_".join(model_checkpoint_components)
 
-        torch.save(model.state_dict(), Config.CHECKPOINTS_DIR / model_checkpoint_name)
+        self.best_model_checkpoint_path = Config.CHECKPOINTS_DIR / model_checkpoint_name
+        torch.save(model.state_dict(), self.best_model_checkpoint_path)

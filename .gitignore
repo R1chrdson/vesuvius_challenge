@@ -133,6 +133,7 @@ dataset/
 
 # Artifact files
 artifacts/
+wandb/
 
 # IDE files
 .vscode/
