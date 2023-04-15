@@ -11,7 +11,7 @@ On the fresh systems these things might be absent
 
 
 ### Environment setup
-First of all you will need to create python virtual environment and install necessary packages:
+First of all, you will need to initialize your own `.env` file, create python virtual environment and install necessary packages:
 ```
 python3 -m venv venv
 source venv/bin/activate
@@ -29,6 +29,13 @@ unzip dataset/vesuvius-challenge-ink-detection.zip -d dataset
 ```
 *Note: Takes 15 mins to download with speed 25 MB/s (UCU WIFI) and 27 mins to extract archives on HDD.*
 
+It's important to manage your env variables. The easiest way to set up all variables needed, is to create .env file:
+```
+cp .env-example .env
+```
+
+*Note: The `WANDB_API` entry with [API key from your wandb account](wandb.ai/authorize) is not present in `.env-exmaple` but is important for experiment tracking!*
+
 
 ## Colab setup
 **Work in progress**
@@ -43,7 +50,16 @@ The idea is to have a notebook with possibility to specify params, git clone thi
 
 
 # Training
-**TBD**
+To start training, make sure to add `WANDB_API` with [API key from your wandb account](wandb.ai/authorize) to your environment variables through export or `.env` file
+
+Before training ensure your have correctly configured your environment variables with `EXPERIMENT_NAME`, `MODEL`, `FOLD_IDX` to ease experiment tracking.
+
+You can add custom model into `source.models` package and add it into `source.models.__init__.MODELS` dict to ease usage along with `MODEL` env variable.
+
+At the moment the training is as simple as:
+```
+python source/train.py
+```
 
 # Submission
 

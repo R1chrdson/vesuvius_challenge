@@ -47,6 +47,7 @@ class AppConfig:
     PATIENCE: int
     CV_FOLDS: int = 5
     FOLD_IDX: int = -1
+    WANDB_API: str
 
     def __init__(self, env):
         for field in self.__annotations__:  # pylint: disable=no-member
