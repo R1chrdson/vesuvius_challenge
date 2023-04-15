@@ -1,4 +1,5 @@
 import numpy as np
+import wandb
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torch.nn import BCEWithLogitsLoss
 from torch.optim import Adam
@@ -7,7 +8,7 @@ from torchmetrics import MetricCollection
 from torchmetrics.classification import BinaryFBetaScore, BinaryAccuracy
 from sklearn.model_selection import KFold
 
-from source.helpers.config import Config
+from source.helpers.config import Config, TRAINING_KEYS
 from source.helpers.dataset import VesuviusDummyDataSet, VesuviusOriginalDataSet
 from source.helpers.logger import logger
 from source.helpers.utils import seed_everything, prepare_folders
@@ -96,15 +97,27 @@ def fit_model(train_loader, test_loader, comment=""):
     train_metrics = metrics.clone().to(Config.DEVICE)
     test_metrics = metrics.clone().to(Config.DEVICE)
 
+    wandb.init(
+        project=Config.WANDB_PROJECT,
+        config={key.lower(): Config[key] for key in TRAINING_KEYS},
+        tags=[Config.MODEL, comment, Config.ENVIRONMENT]
+    )
+
     for _ in trange(Config.EPOCHS, desc="Epoch"):
-        train_epoch(train_loader, model, optimizer, criterion, train_metrics)
+        train_metric_data = train_epoch(train_loader, model, optimizer, criterion, train_metrics)
         test_metric_data = test_epoch(test_loader, model, criterion, test_metrics)
 
+        wandb.log({
+            **{f"train/{key}": value for key, value in train_metric_data.items()},
+            **{f"test/{key}": value for key, value in test_metric_data.items()},
+        })
+        
         early_stopping(test_metric_data["BinaryFBetaScore"], model, comment)
         if early_stopping.early_stop:
             logger.info("Early stopping")
             break
 
+    wandb.finish()
     return early_stopping.best_score
 
 

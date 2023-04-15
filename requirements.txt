@@ -5,3 +5,4 @@ black==23.1.0
 torch==2.0.0
 torchaudio==2.0.1
 torchvision==0.15.1
+wandb==0.14.2

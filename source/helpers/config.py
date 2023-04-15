@@ -14,6 +14,7 @@ from .serialization import ConfigEncoder
 
 load_dotenv()
 
+TRAINING_KEYS = ["BATCH_SIZE", "EPOCHS", "LEARNING_RATE", "PATIENCE", "CV_FOLDS", "FOLD_IDX", "TILE_SIZE"]
 
 dataset_path_map = {
     "local": "dataset",
@@ -85,6 +86,9 @@ class AppConfig:
         """Defines the path to the dataset logic"""
         return Path(dataset_path_map[self.ENVIRONMENT])
 
+    def WANDB_PROJECT(self) -> str:
+        return "Vesuvius Challenge"
+
     def __repr__(self):
         attrs = {
             **vars(self),
@@ -94,8 +98,14 @@ class AppConfig:
                 if isinstance(getattr(type(self), prop_name, None), property)
             },
         }
+
+        # Remove private attributes
+        attrs.pop("WANDB_API", None)
+
         attrs_str = json.dumps(attrs, indent=4, sort_keys=True, cls=ConfigEncoder)
         return f"{type(self).__name__}({attrs_str})"
 
+    def __getitem__(self, key):
+        return self.__getattribute__(key)
 
 Config = AppConfig(os.environ)
