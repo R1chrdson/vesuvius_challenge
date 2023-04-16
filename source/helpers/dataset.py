@@ -60,64 +60,68 @@ class VesuviusOriginalDataSet(Dataset):
         train_data_path = Config.DATASET_PATH / "train"
         train_fragment_paths = sorted(list(train_data_path.iterdir()))
 
-        voxels = []
-        labels = []
+        voxels = {}
+        labels = {}
         for fragment in tqdm(train_fragment_paths):
-            voxels_data, labels_data = self._load_fragment(fragment)
-            voxels.append(voxels_data)
-            labels.append(labels_data)
-            # break # TODO REMOVE IT TO GET FULL DATA
+            voxels[fragment], labels[fragment] = self._load_fragment(fragment)
+            # break #  COMMENT IT TO GET FULL DATA
 
-        self.voxels_data = np.concatenate(voxels, axis=0)
-        self.labels = np.concatenate(labels, axis=0)
+        self.voxels_data = np.concatenate([voxels.pop(fragment) for fragment in train_fragment_paths], axis=0)
+        self.labels = np.concatenate([labels.pop(fragment) for fragment in train_fragment_paths], axis=0)
 
     def _load_fragment(self, fragment_path: Path):
         slice_paths = sorted(list((fragment_path / "surface_volume").glob("*.tif")))
         labels_path = fragment_path / "inklabels.png"
         labels_img = cv2.imread(str(labels_path), cv2.IMREAD_GRAYSCALE).astype(bool)
         mask = cv2.imread(str(fragment_path / "mask.png"), cv2.IMREAD_GRAYSCALE).astype(bool)
-        voxels = []
-        for slice_path in tqdm(slice_paths, leave=False):
+        masked_idxs = self.get_masked_idxs(mask)
+        voxels_data = np.empty((len(masked_idxs), len(slice_paths), Config.TILE_SIZE, Config.TILE_SIZE), dtype=np.uint8)
+        for i, slice_path in enumerate(tqdm(slice_paths, leave=False)):
             # In this case, we use cv2 to load image, because it's faster than PIL
             slice_img = cv2.imread(str(slice_path), cv2.IMREAD_UNCHANGED)
 
             # Convert to uint8 to save memory usage
             slice_data = (slice_img // 255).astype(np.uint8)
 
-            tiles = self.split_slice(slice_data, mask)
-            voxels.append(tiles)
+            voxels_data[:, i, :, :] = self.split_slice(slice_data, masked_idxs)
 
-        voxels_data = np.stack(voxels, axis=1)
-
-        labels_data = self.split_slice(labels_img, mask)
+        labels_data = self.split_slice(labels_img, masked_idxs)
         labels_data = labels_data.mean(axis=(1, 2)) > 0.5
         return voxels_data, labels_data
 
-    def split_slice(self, slice_data, mask=None):
+    def get_masked_idxs(self, mask):
+        """
+        Returns list of tuples with indexes of tiles with data.
+        Basically, the idea of this function is to pre calculate the indexes of tiles with data,
+        so it would be possible to pre-allocate memory for the fragments and then just fill it with data.
+        This approach is much faster and less memory consuming than just appending to the list and concatenating then.
+        """
+        mask_idxs = []
+        for i in range(0, mask.shape[0], Config.TILE_SIZE):
+            for j in range(0, mask.shape[1], Config.TILE_SIZE):
+                if mask[i : i + Config.TILE_SIZE, j : j + Config.TILE_SIZE].any():
+                    mask_idxs.append((i, j))
+        return mask_idxs
+
+    def split_slice(self, slice_data, masked_idxs):
         """Split slice into tiles. It's possible to mask to filter out tiles with no data."""
-        tiles = []
-        for i in range(0, slice_data.shape[0], Config.TILE_SIZE):
-            for j in range(0, slice_data.shape[1], Config.TILE_SIZE):
-                if mask is not None:
-                    if not mask[
-                        i : i + Config.TILE_SIZE, j : j + Config.TILE_SIZE
-                    ].any():
-                        continue
+        tiles = np.empty((len(masked_idxs), Config.TILE_SIZE, Config.TILE_SIZE), dtype=np.uint8)
+        for k, (i, j) in enumerate(masked_idxs):
+            tile = slice_data[i : i + Config.TILE_SIZE, j : j + Config.TILE_SIZE]
+            if tile.shape != (Config.TILE_SIZE, Config.TILE_SIZE):
+                tile = np.pad(
+                    tile,
+                    (
+                        (0, Config.TILE_SIZE - tile.shape[0]),
+                        (0, Config.TILE_SIZE - tile.shape[1]),
+                    ),
+                    "constant",
+                    constant_values=0,
+                )
 
-                tile = slice_data[i : i + Config.TILE_SIZE, j : j + Config.TILE_SIZE]
-                if tile.shape != (Config.TILE_SIZE, Config.TILE_SIZE):
-                    tile = np.pad(
-                        tile,
-                        (
-                            (0, Config.TILE_SIZE - tile.shape[0]),
-                            (0, Config.TILE_SIZE - tile.shape[1]),
-                        ),
-                        "constant",
-                        constant_values=0,
-                    )
-                tiles.append(tile)
+            tiles[k] = tile
 
-        return np.stack(tiles)
+        return tiles
 
     def __len__(self) -> int:
         return self.voxels_data.shape[0]

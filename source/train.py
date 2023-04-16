@@ -14,7 +14,7 @@ from source.helpers.logger import logger
 from source.helpers.utils import seed_everything, prepare_folders
 from source.models import MODELS
 from source.helpers.early_stopper import EarlyStopping
-from datetime import datetime
+
 
 def train_batch(batch, model, optimizer, criterion, metrics):
     x, y = batch
@@ -74,7 +74,7 @@ def test_epoch(data_loader, model, criterion, metrics):
         metric_data = {
             "loss": np.mean(losses),
             **{
-                metric_name: metric_value.cpu().item()
+                metric_name: metric_value.item()
                 for metric_name, metric_value in metrics.compute().items()
             },
         }
@@ -117,15 +117,16 @@ def fit_model(train_loader, test_loader, comment=""):
             logger.info("Early stopping")
             break
 
-    artifact = wandb.Artifact(Config.MODEL, type="model")
-    artifact.add_file(early_stopping.best_model_checkpoint_path)
-    wandb.log_artifact(
-        artifact,
+    artifact = wandb.Artifact(
+        name='-'.join([Config.MODEL, comment]),
+        type="model",
         metadata={
             "train_metrics": train_metric_data,
             "test_metrics": test_metric_data,
         }
     )
+    artifact.add_file(early_stopping.best_model_checkpoint_path)
+    wandb.log_artifact(artifact)
     wandb.finish()
     return early_stopping.best_score
 
