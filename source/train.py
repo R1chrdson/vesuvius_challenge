@@ -9,7 +9,7 @@ from torchmetrics.classification import BinaryFBetaScore, BinaryAccuracy
 from sklearn.model_selection import KFold
 
 from source.helpers.config import Config, TRAINING_KEYS
-from source.helpers.dataset import VesuviusDummyDataSet, VesuviusOriginalDataSet
+from source.helpers.dataset import VesuviusDummyDataSet, VesuviusOriginalDataSet, UnetVesuviusDataset
 from source.helpers.logger import logger
 from source.helpers.utils import seed_everything, prepare_folders
 from source.models import MODELS
@@ -168,7 +168,7 @@ def train_with_cv():
     seed_everything()
     prepare_folders()
 
-    dataset = VesuviusOriginalDataSet()
+    dataset = UnetVesuviusDataset()
     splits = KFold(n_splits=Config.CV_FOLDS, shuffle=True, random_state=Config.SEED)
 
     fold_idxs = list(splits.split(np.arange(len(dataset))))
