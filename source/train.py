@@ -101,6 +101,8 @@ def fit_model(train_loader, test_loader, comment=""):
         project=Config.WANDB_PROJECT,
         config={key.lower(): Config[key] for key in TRAINING_KEYS},
         tags=[Config.MODEL, comment, Config.ENVIRONMENT],
+        name='-'.join(filter(bool, [Config.MODEL, comment, Config.CHECKPOINTS_SLUG])),
+        group=Config.CHECKPOINTS_SLUG
     )
 
     for _ in trange(Config.EPOCHS, desc="Epoch"):
@@ -118,7 +120,7 @@ def fit_model(train_loader, test_loader, comment=""):
             break
 
     artifact = wandb.Artifact(
-        name='-'.join([Config.MODEL, comment]),
+        name=early_stopping.best_model_checkpoint_path.stem,
         type="model",
         metadata={
             "train_metrics": train_metric_data,

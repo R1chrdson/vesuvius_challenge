@@ -48,6 +48,7 @@ class AppConfig:
     MODEL: str
     LEARNING_RATE: float
     CHECKPOINTS_DIR: Path
+    CHECKPOINTS_SLUG: str = ""
     PATIENCE: int
     CV_FOLDS: int = 5
     FOLD_IDX: int = -1

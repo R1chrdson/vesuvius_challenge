@@ -1,7 +1,7 @@
 from source.models.example_model import InkDetector
 from source.models.unet import UNet
 
-from source.helpers.datasets import VesuviusOriginalDataSet, UnetVesuviusDataset
+from source.helpers.dataset import VesuviusOriginalDataSet, UnetVesuviusDataset
 
 MODELS = {
     "InkDetector": {

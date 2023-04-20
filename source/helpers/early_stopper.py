@@ -33,10 +33,8 @@ class EarlyStopping:
 
     def save_checkpoint(self, model, comment=""):
         """Saves model when validation loss decrease."""
-        model_checkpoint_components = [Config.MODEL, "checkpoint.pt"]
-        if comment:
-            model_checkpoint_components.insert(1, comment)
-        model_checkpoint_name = "_".join(model_checkpoint_components)
+        model_checkpoint_components = [Config.MODEL, comment, Config.CHECKPOINTS_SLUG, "checkpoint.pt"]
+        model_checkpoint_name = "_".join(filter(bool, model_checkpoint_components))
 
         self.best_model_checkpoint_path = Config.CHECKPOINTS_DIR / model_checkpoint_name
         torch.save(model.state_dict(), self.best_model_checkpoint_path)
