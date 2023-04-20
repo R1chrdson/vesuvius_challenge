@@ -14,7 +14,10 @@ from .serialization import ConfigEncoder
 
 load_dotenv()
 
-TRAINING_KEYS = ["BATCH_SIZE", "EPOCHS", "LEARNING_RATE", "PATIENCE", "CV_FOLDS", "FOLD_IDX", "TILE_SIZE"]
+TRAINING_KEYS = [
+    "BATCH_SIZE", "EPOCHS", "LEARNING_RATE", "PATIENCE",
+    "CV_FOLDS", "FOLD_IDX", "TILE_SIZE", "Z_START", "Z_NUMBER",
+]
 
 dataset_path_map = {
     "local": "dataset",
@@ -49,6 +52,8 @@ class AppConfig:
     CV_FOLDS: int = 5
     FOLD_IDX: int = -1
     WANDB_API_KEY: str
+    Z_START: int = 0
+    Z_NUMBER: int = 65
 
     def __init__(self, env):
         for field in self.__annotations__:  # pylint: disable=no-member

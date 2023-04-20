@@ -29,7 +29,7 @@ class VesuviusDummyDataSet(Dataset):
         # Often, the data initially loaded in the form of a file, and then in getitem only returned by the index
         # But it's not always the case, so you can load the data in the getitem method from the file too
         self.voxels_data = np.random.randint(
-            0, 255, (n_samples, 65, Config.TILE_SIZE, Config.TILE_SIZE)
+            0, 255, (n_samples, Config.Z_NUMBER, Config.TILE_SIZE, Config.TILE_SIZE)
         )
 
         # 1 if average of all layers per pixel is greater than 128, 0 otherwise
@@ -71,11 +71,12 @@ class VesuviusOriginalDataSet(Dataset):
 
     def _load_fragment(self, fragment_path: Path):
         slice_paths = sorted(list((fragment_path / "surface_volume").glob("*.tif")))
+        slice_paths = filter(is_slice_to_load, slice_paths)
         labels_path = fragment_path / "inklabels.png"
         labels_img = cv2.imread(str(labels_path), cv2.IMREAD_GRAYSCALE).astype(bool)
         mask = cv2.imread(str(fragment_path / "mask.png"), cv2.IMREAD_GRAYSCALE).astype(bool)
         masked_idxs = self.get_masked_idxs(mask)
-        voxels_data = np.empty((len(masked_idxs), len(slice_paths), Config.TILE_SIZE, Config.TILE_SIZE), dtype=np.uint8)
+        voxels_data = np.empty((len(masked_idxs), Config.Z_NUMBER, Config.TILE_SIZE, Config.TILE_SIZE), dtype=np.uint8)
         for i, slice_path in enumerate(tqdm(slice_paths, leave=False)):
             # In this case, we use cv2 to load image, because it's faster than PIL
             slice_img = cv2.imread(str(slice_path), cv2.IMREAD_UNCHANGED)
@@ -130,3 +131,10 @@ class VesuviusOriginalDataSet(Dataset):
         voxel = (self.voxels_data[index] / 255.0).astype(np.float32)
         label = np.expand_dims(self.labels[index], axis=0)
         return torch.from_numpy(voxel).unsqueeze(0), torch.FloatTensor(label)
+
+
+def is_slice_to_load(slice_path: Path) -> bool:
+    try:
+        return Config.Z_START <= int(slice_path.stem) < Config.Z_START + Config.Z_NUMBER
+    except ValueError:
+        return False
