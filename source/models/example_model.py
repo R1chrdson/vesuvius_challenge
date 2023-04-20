@@ -39,7 +39,9 @@ class InkDetector(nn.Module):
             nn.Linear(128, 128),
             nn.ReLU(inplace=True),
             nn.Linear(128, 1),
+            nn.Sigmoid(),
         )
+
 
     def forward(self, x):
         features = self.encoder(x)

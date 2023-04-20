@@ -1,7 +1,7 @@
 import numpy as np
 import wandb
 from torch.utils.data import DataLoader, SubsetRandomSampler
-from torch.nn import BCEWithLogitsLoss
+from torch.nn import BCELoss
 from torch.optim import Adam
 from tqdm import trange, tqdm
 from torchmetrics import MetricCollection
@@ -85,7 +85,7 @@ def test_epoch(data_loader, model, criterion, metrics):
 
 def fit_model(train_loader, test_loader, comment=""):
     model = MODELS[Config.MODEL]().to(Config.DEVICE)
-    criterion = BCEWithLogitsLoss()
+    criterion = BCELoss()
     optimizer = Adam(model.parameters(), lr=Config.LEARNING_RATE)
     early_stopping = EarlyStopping(patience=Config.PATIENCE, verbose=True)
 
