@@ -84,7 +84,7 @@ def test_epoch(data_loader, model, criterion, metrics):
 
 
 def fit_model(train_loader, test_loader, comment=""):
-    model = MODELS[Config.MODEL]().to(Config.DEVICE)
+    model = MODELS[Config.MODEL]["model"]().to(Config.DEVICE)
     criterion = BCELoss()
     optimizer = Adam(model.parameters(), lr=Config.LEARNING_RATE)
     early_stopping = EarlyStopping(patience=Config.PATIENCE, verbose=True)
@@ -168,7 +168,7 @@ def train_with_cv():
     seed_everything()
     prepare_folders()
 
-    dataset = UnetVesuviusDataset()
+    dataset = MODELS[Config.MODEL]["dataset"]()
     splits = KFold(n_splits=Config.CV_FOLDS, shuffle=True, random_state=Config.SEED)
 
     fold_idxs = list(splits.split(np.arange(len(dataset))))
