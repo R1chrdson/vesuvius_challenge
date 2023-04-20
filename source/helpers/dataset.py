@@ -1,7 +1,5 @@
 """Dataset classes used for training and evaluation of the model."""
-import warnings
 from pathlib import Path
-import PIL.Image as Image
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -10,8 +8,6 @@ import cv2
 
 from .config import Config
 from .logger import logger
-
-warnings.simplefilter("ignore", Image.DecompressionBombWarning)
 
 
 class VesuviusDummyDataSet(Dataset):
@@ -64,7 +60,6 @@ class VesuviusOriginalDataSet(Dataset):
         labels = {}
         for fragment in tqdm(train_fragment_paths):
             voxels[fragment], labels[fragment] = self._load_fragment(fragment)
-            # break #  COMMENT IT TO GET FULL DATA
 
         self.voxels_data = np.concatenate([voxels.pop(fragment) for fragment in train_fragment_paths], axis=0)
         self.labels = np.concatenate([labels.pop(fragment) for fragment in train_fragment_paths], axis=0)
@@ -75,7 +70,7 @@ class VesuviusOriginalDataSet(Dataset):
         labels_path = fragment_path / "inklabels.png"
         labels_img = cv2.imread(str(labels_path), cv2.IMREAD_GRAYSCALE).astype(bool)
         mask = cv2.imread(str(fragment_path / "mask.png"), cv2.IMREAD_GRAYSCALE).astype(bool)
-        masked_idxs = self.get_masked_idxs(mask)
+        masked_idxs = self._get_masked_idxs(mask)
         voxels_data = np.empty((len(masked_idxs), Config.Z_NUMBER, Config.TILE_SIZE, Config.TILE_SIZE), dtype=np.uint8)
         for i, slice_path in enumerate(tqdm(slice_paths, leave=False)):
             # In this case, we use cv2 to load image, because it's faster than PIL
@@ -84,13 +79,13 @@ class VesuviusOriginalDataSet(Dataset):
             # Convert to uint8 to save memory usage
             slice_data = (slice_img // 255).astype(np.uint8)
 
-            voxels_data[:, i, :, :] = self.split_slice(slice_data, masked_idxs)
+            voxels_data[:, i, :, :] = self._split_slice(slice_data, masked_idxs)
 
-        labels_data = self.split_slice(labels_img, masked_idxs)
+        labels_data = self._split_slice(labels_img, masked_idxs)
         labels_data = labels_data.mean(axis=(1, 2)) > 0.5
         return voxels_data, labels_data
 
-    def get_masked_idxs(self, mask):
+    def _get_masked_idxs(self, mask):
         """
         Returns list of tuples with indexes of tiles with data.
         Basically, the idea of this function is to pre calculate the indexes of tiles with data,
@@ -104,7 +99,7 @@ class VesuviusOriginalDataSet(Dataset):
                     mask_idxs.append((i, j))
         return mask_idxs
 
-    def split_slice(self, slice_data, masked_idxs):
+    def _split_slice(self, slice_data, masked_idxs):
         """Split slice into tiles. It's possible to mask to filter out tiles with no data."""
         tiles = np.empty((len(masked_idxs), Config.TILE_SIZE, Config.TILE_SIZE), dtype=np.uint8)
         for k, (i, j) in enumerate(masked_idxs):
