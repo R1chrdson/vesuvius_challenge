@@ -46,6 +46,7 @@ class AppConfig:
     BATCH_SIZE: int
     EPOCHS: int
     MODEL: str
+    WEIGHT_DECAY: float
     LEARNING_RATE: float
     CHECKPOINTS_DIR: Path
     CHECKPOINTS_SLUG: str = ""

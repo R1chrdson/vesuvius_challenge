@@ -86,7 +86,7 @@ def test_epoch(data_loader, model, criterion, metrics):
 def fit_model(train_loader, test_loader, comment=""):
     model = MODELS[Config.MODEL]["model"]().to(Config.DEVICE)
     criterion = BCELoss()
-    optimizer = Adam(model.parameters(), lr=Config.LEARNING_RATE)
+    optimizer = Adam(model.parameters(), lr=Config.LEARNING_RATE, weight_decay=Config.WEIGHT_DECAY)
     early_stopping = EarlyStopping(patience=Config.PATIENCE, verbose=True)
 
     metrics = MetricCollection([
