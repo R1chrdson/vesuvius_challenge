@@ -52,7 +52,6 @@ class AppConfig:
     CHECKPOINTS_SLUG: str = ""
     PATIENCE: int
     CV_FOLDS: int = 5
-    FOLD_IDX: int = -1
     WANDB_API_KEY: str
     Z_START: int = 0
     Z_NUMBER: int = 65
@@ -82,6 +81,10 @@ class AppConfig:
     def NUM_WORKERS(self) -> int:
         """Defines the number of workers for the DataLoader"""
         return os.cpu_count() or 0
+
+    @property
+    def FOLD_IDX(self):
+        return json.loads(os.environ.get("FOLD_IDX", "-1"))
 
     @property
     def DEVICE(self) -> torch.device:
@@ -117,3 +120,4 @@ class AppConfig:
         return self.__getattribute__(key)
 
 Config = AppConfig(os.environ)
+Config.FOLD_IDX

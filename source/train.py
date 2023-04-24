@@ -185,12 +185,15 @@ def train_with_cv():
     fold_idxs = list(splits.split(np.arange(len(dataset))))
 
     if Config.FOLD_IDX != -1:
-        fold_idxs = [fold_idxs[Config.FOLD_IDX]]
+        if isinstance(Config.FOLD_IDX, list):
+            fold_idxs = [fold_idxs[idx - 1] for idx in Config.FOLD_IDX]
+        elif isinstance(Config.FOLD_IDX, int):
+            fold_idxs = [fold_idxs[Config.FOLD_IDX]]
+        else:
+            raise NotImplementedError("Config.FOLD_IDX must be list or int")
 
     fold_scores = []
-    for fold, (train_idx, val_idx) in enumerate(
-        splits.split(np.arange(len(dataset))), 1
-    ):
+    for fold, (train_idx, val_idx) in enumerate(fold_idxs, 1):
         logger.info(f"Fold {fold}")
         train_sampler = SubsetRandomSampler(train_idx)
         test_sampler = SubsetRandomSampler(val_idx)
