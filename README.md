@@ -61,7 +61,6 @@ At the moment the training is as simple as:
 python source/train.py
 ```
 
-You can also use `scripts/train.sh` to specify exact folds to train it will execute that folds sequentially.
 
 # Submission
 
