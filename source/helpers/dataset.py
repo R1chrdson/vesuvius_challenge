@@ -10,6 +10,13 @@ from .config import Config
 from .logger import logger
 
 
+def is_slice_to_load(slice_path: Path) -> bool:
+    try:
+        return Config.Z_START <= int(slice_path.stem) < Config.Z_START + Config.Z_NUMBER
+    except ValueError:
+        return False
+
+
 class VesuviusDummyDataSet(Dataset):
     """Vesuvius Dummy Dataset
     This dataset class represents the data format used in the Vesuvius Challenge,
@@ -128,13 +135,6 @@ class VesuviusOriginalDataSet(Dataset):
         return torch.from_numpy(voxel).unsqueeze(0), torch.FloatTensor(label)
 
 
-def is_slice_to_load(slice_path: Path) -> bool:
-    try:
-        return Config.Z_START <= int(slice_path.stem) < Config.Z_START + Config.Z_NUMBER
-    except ValueError:
-        return False
-
-
 class UnetVesuviusDataset(VesuviusOriginalDataSet):
     def _load_fragment(self, fragment_path: Path):
         slice_paths = sorted(list((fragment_path / "surface_volume").glob("*.tif")))
@@ -160,3 +160,22 @@ class UnetVesuviusDataset(VesuviusOriginalDataSet):
         voxel = (self.voxels_data[index] / 255.0).astype(np.float32)
         label = np.expand_dims(self.labels[index], axis=0)
         return torch.from_numpy(voxel), torch.FloatTensor(label)
+
+
+class ApplyTransformDataset(Dataset):
+    """This class is used to apply transforms to the dataset.
+    Only classes with explicit masks are supported, so VesuviusOriginalDataSet is not supported!
+    """
+    def __init__(self, dataset, transform):
+        self.dataset = dataset
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        voxel = (self.dataset.voxels_data[index] / 255.0).astype(np.float32)
+        label = np.expand_dims(self.dataset.labels[index], axis=0)
+
+        transformed = self.transform(image=voxel, mask=label)
+        return torch.from_numpy(transformed["image"]), torch.FloatTensor(transformed["mask"].copy())

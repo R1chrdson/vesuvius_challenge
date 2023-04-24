@@ -1,19 +1,20 @@
 import numpy as np
-import wandb
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from sklearn.model_selection import KFold
 from torch.nn import BCELoss
 from torch.optim import Adam
-from tqdm import trange, tqdm
+from torch.utils.data import DataLoader, SubsetRandomSampler
 from torchmetrics import MetricCollection
-from torchmetrics.classification import BinaryFBetaScore, BinaryAccuracy
-from sklearn.model_selection import KFold
+from torchmetrics.classification import BinaryAccuracy, BinaryFBetaScore
+from tqdm import tqdm, trange
 
-from source.helpers.config import Config, TRAINING_KEYS
-from source.helpers.dataset import VesuviusDummyDataSet, VesuviusOriginalDataSet, UnetVesuviusDataset
-from source.helpers.logger import logger
-from source.helpers.utils import seed_everything, prepare_folders
-from source.models import MODELS
+import wandb
+from source.helpers.augmentations import transform
+from source.helpers.config import TRAINING_KEYS, Config
+from source.helpers.dataset import VesuviusDummyDataSet, ApplyTransformDataset, VesuviusOriginalDataSet
 from source.helpers.early_stopper import EarlyStopping
+from source.helpers.logger import logger
+from source.helpers.utils import prepare_folders, seed_everything
+from source.models import MODELS
 
 
 def train_batch(batch, model, optimizer, criterion, metrics):
@@ -120,7 +121,7 @@ def fit_model(train_loader, test_loader, comment=""):
             break
 
     wandb.log({"best_val_score": early_stopping.best_score})
-    
+
     artifact = wandb.Artifact(
         name=early_stopping.best_model_checkpoint_path.stem,
         type="model",
@@ -173,6 +174,12 @@ def train_with_cv():
     prepare_folders()
 
     dataset = MODELS[Config.MODEL]["dataset"]()
+    train_dataset = ApplyTransformDataset(dataset, transform=transform)
+
+    # Setup augmentations for any dataset except VesuviusOriginalDataSet by default
+    if type(dataset) == VesuviusOriginalDataSet:
+        train_dataset = dataset
+
     splits = KFold(n_splits=Config.CV_FOLDS, shuffle=True, random_state=Config.SEED)
 
     fold_idxs = list(splits.split(np.arange(len(dataset))))
@@ -189,7 +196,7 @@ def train_with_cv():
         test_sampler = SubsetRandomSampler(val_idx)
 
         train_loader = DataLoader(
-            dataset,
+            train_dataset,
             sampler=train_sampler,
             batch_size=Config.BATCH_SIZE,
             num_workers=Config.NUM_WORKERS,
