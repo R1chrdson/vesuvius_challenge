@@ -172,10 +172,11 @@ class ApplyTransformDataset(Dataset):
 
     def __len__(self):
         return len(self.dataset)
-
+    
     def __getitem__(self, index):
-        voxel = (self.dataset.voxels_data[index] / 255.0).astype(np.float32)
-        label = np.expand_dims(self.dataset.labels[index], axis=0)
-
-        transformed = self.transform(image=voxel, mask=label)
-        return torch.from_numpy(transformed["image"]), torch.FloatTensor(transformed["mask"].copy())
+        voxel = self.dataset.voxels_data[index]
+        label = self.dataset.labels[index]
+        transformed = self.transform(image=voxel.transpose(1, 2, 0), mask=label)
+        transformed_voxel = (transformed['image'].transpose(2, 0, 1) / 255.0).astype(np.float32)
+        transformed_label = np.expand_dims(transformed['mask'], axis=0)
+        return torch.from_numpy(transformed_voxel), torch.FloatTensor(transformed_label)

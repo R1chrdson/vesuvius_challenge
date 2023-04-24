@@ -182,18 +182,21 @@ def train_with_cv():
 
     splits = KFold(n_splits=Config.CV_FOLDS, shuffle=True, random_state=Config.SEED)
 
-    fold_idxs = list(splits.split(np.arange(len(dataset))))
+    fold_data_idxs = list(splits.split(np.arange(len(dataset))))
+    fold_idxs  = range(1, Config.CV_FOLDS + 1)
 
     if Config.FOLD_IDX != -1:
         if isinstance(Config.FOLD_IDX, list):
-            fold_idxs = [fold_idxs[idx - 1] for idx in Config.FOLD_IDX]
+            fold_data_idxs = [fold_data_idxs[idx - 1] for idx in Config.FOLD_IDX]
+            fold_idxs = Config.FOLD_IDX
         elif isinstance(Config.FOLD_IDX, int):
-            fold_idxs = [fold_idxs[Config.FOLD_IDX]]
+            fold_data_idxs = [fold_data_idxs[Config.FOLD_IDX]]
+            fold_idxs = [Config.FOLD_IDX]
         else:
             raise NotImplementedError("Config.FOLD_IDX must be list or int")
 
     fold_scores = []
-    for fold, (train_idx, val_idx) in enumerate(fold_idxs, 1):
+    for fold, (train_idx, val_idx) in zip(fold_idxs, fold_data_idxs):
         logger.info(f"Fold {fold}")
         train_sampler = SubsetRandomSampler(train_idx)
         test_sampler = SubsetRandomSampler(val_idx)
@@ -203,7 +206,6 @@ def train_with_cv():
             sampler=train_sampler,
             batch_size=Config.BATCH_SIZE,
             num_workers=Config.NUM_WORKERS,
-            pin_memory=True,
         )
         test_loader = DataLoader(
             dataset,
