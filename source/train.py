@@ -119,6 +119,8 @@ def fit_model(train_loader, test_loader, comment=""):
             logger.info("Early stopping")
             break
 
+    wandb.log({"best_val_score": early_stopping.best_score})
+    
     artifact = wandb.Artifact(
         name=early_stopping.best_model_checkpoint_path.stem,
         type="model",
