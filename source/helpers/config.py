@@ -120,4 +120,3 @@ class AppConfig:
         return self.__getattribute__(key)
 
 Config = AppConfig(os.environ)
-Config.FOLD_IDX
