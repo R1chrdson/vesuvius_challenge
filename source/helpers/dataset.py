@@ -42,7 +42,7 @@ class VesuviusDummyDataSet(Dataset):
         return self.voxels_data.shape[0]
 
     def __getitem__(self, index):
-        voxel = (self.voxels_data[index] / 255.0).astype(np.float32)
+        voxel = (self.voxels_data[index]).astype(np.float32) / 255.
         label = np.expand_dims(self.labels[index], axis=0)
         return torch.from_numpy(voxel).unsqueeze(0), torch.FloatTensor(label)
 
@@ -130,7 +130,7 @@ class VesuviusOriginalDataSet(Dataset):
         return self.voxels_data.shape[0]
 
     def __getitem__(self, index):
-        voxel = (self.voxels_data[index] / 255.0).astype(np.float32)
+        voxel = (self.voxels_data[index]).astype(np.float32) / 255.
         label = np.expand_dims(self.labels[index], axis=0)
         return torch.from_numpy(voxel).unsqueeze(0), torch.FloatTensor(label)
 
@@ -143,7 +143,7 @@ class UnetVesuviusDataset(VesuviusOriginalDataSet):
         labels_img = cv2.imread(str(labels_path), cv2.IMREAD_GRAYSCALE).astype(bool)
         mask = cv2.imread(str(fragment_path / "mask.png"), cv2.IMREAD_GRAYSCALE).astype(bool)
         masked_idxs = self._get_masked_idxs(mask)
-        voxels_data = np.empty((len(masked_idxs), Config.Z_NUMBER, Config.TILE_SIZE, Config.TILE_SIZE), dtype=np.uint8)
+        voxels_data = np.empty((len(masked_idxs), Config.TILE_SIZE, Config.TILE_SIZE, Config.Z_NUMBER), dtype=np.uint8)
         for i, slice_path in enumerate(tqdm(slice_paths, leave=False)):
             # In this case, we use cv2 to load image, because it's faster than PIL
             slice_img = cv2.imread(str(slice_path), cv2.IMREAD_UNCHANGED)
@@ -151,13 +151,19 @@ class UnetVesuviusDataset(VesuviusOriginalDataSet):
             # Convert to uint8 to save memory usage
             slice_data = (slice_img // 255).astype(np.uint8)
 
-            voxels_data[:, i, :, :] = self._split_slice(slice_data, masked_idxs)
+            voxels_data[..., i] = self._split_slice(slice_data, masked_idxs)
+
+        mu = np.mean(voxels_data, axis=(0, 1, 2))
+        std = np.std(voxels_data, axis=(0, 1, 2))
+
+        voxels_data = (voxels_data - mu) / std
+        voxels_data = np.transpose(voxels_data, (0, 3, 1, 2))
 
         labels_data = self._split_slice(labels_img, masked_idxs)
         return voxels_data, labels_data
 
     def __getitem__(self, index):
-        voxel = (self.voxels_data[index] / 255.0).astype(np.float32)
+        voxel = (self.voxels_data[index]).astype(np.float32) / 255.
         label = np.expand_dims(self.labels[index], axis=0)
         return torch.from_numpy(voxel), torch.FloatTensor(label)
 
@@ -172,11 +178,11 @@ class ApplyTransformDataset(Dataset):
 
     def __len__(self):
         return len(self.dataset)
-    
+
     def __getitem__(self, index):
         voxel = self.dataset.voxels_data[index]
         label = self.dataset.labels[index]
         transformed = self.transform(image=voxel.transpose(1, 2, 0), mask=label)
-        transformed_voxel = (transformed['image'].transpose(2, 0, 1) / 255.0).astype(np.float32)
+        transformed_voxel = transformed['image'].transpose(2, 0, 1).astype(np.float32) / 255.
         transformed_label = np.expand_dims(transformed['mask'], axis=0)
         return torch.from_numpy(transformed_voxel), torch.FloatTensor(transformed_label)
