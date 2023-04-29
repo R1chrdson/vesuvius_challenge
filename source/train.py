@@ -10,9 +10,12 @@ from tqdm import tqdm, trange
 import wandb
 from source.helpers.augmentations import transform
 from source.helpers.config import TRAINING_KEYS, Config
-from source.helpers.dataset import VesuviusDummyDataSet, ApplyTransformDataset, VesuviusOriginalDataSet
+from source.helpers.dataset import (ApplyTransformDataset,
+                                    VesuviusDummyDataSet,
+                                    VesuviusOriginalDataSet)
 from source.helpers.early_stopper import EarlyStopping
 from source.helpers.logger import logger
+from source.helpers.losses import LOSSES
 from source.helpers.utils import prepare_folders, seed_everything
 from source.models import MODELS
 
@@ -86,14 +89,13 @@ def test_epoch(data_loader, model, criterion, metrics):
 
 def fit_model(train_loader, test_loader, comment=""):
     model = MODELS[Config.MODEL]["model"]().to(Config.DEVICE)
-    criterion = BCELoss()
+    criterion = LOSSES[Config.LOSS]()
     optimizer = Adam(model.parameters(), lr=Config.LEARNING_RATE, weight_decay=Config.WEIGHT_DECAY)
     early_stopping = EarlyStopping(patience=Config.PATIENCE, verbose=True)
 
     metrics = MetricCollection([
         BinaryAccuracy(),
         BinaryFBetaScore(beta=0.5),
-
     ])
     train_metrics = metrics.clone().to(Config.DEVICE)
     test_metrics = metrics.clone().to(Config.DEVICE)

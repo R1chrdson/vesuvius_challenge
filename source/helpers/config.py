@@ -15,7 +15,7 @@ from .serialization import ConfigEncoder
 load_dotenv()
 
 TRAINING_KEYS = [
-    "BATCH_SIZE", "EPOCHS", "LEARNING_RATE", "PATIENCE",
+    "BATCH_SIZE", "EPOCHS", "LEARNING_RATE", "PATIENCE", "LOSS",
     "CV_FOLDS", "FOLD_IDX", "TILE_SIZE", "Z_START", "Z_NUMBER",
 ]
 
@@ -48,6 +48,7 @@ class AppConfig:
     MODEL: str
     WEIGHT_DECAY: float
     LEARNING_RATE: float
+    LOSS: str = "BCE"
     CHECKPOINTS_DIR: Path
     CHECKPOINTS_SLUG: str = ""
     PATIENCE: int
