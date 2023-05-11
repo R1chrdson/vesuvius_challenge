@@ -45,9 +45,8 @@ The credentials might be stored as Google Drive file.
 
 
 ## Kaggle setup
-**Work in progress**
-The idea is to have a notebook with possibility to specify params, git clone this repo and execute trainings with possibly some local changes. The credentials to git clone should be shared through secret variables on kaggle.
-
+The kaggle notebook is available [by the link](https://www.kaggle.com/code/r1chardson/vesuvius-challenge-train-notebook/) and in (notebooks/kaggle_training_notebook.ipynb).
+Simply follow the instructions from the notebook to start training.
 
 # Training
 To start training, make sure to add `WANDB_API` with [API key from your wandb account](wandb.ai/authorize) to your environment variables through export or `.env` file
