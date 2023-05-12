@@ -4,6 +4,7 @@ Most of them were credited from
 https://www.kaggle.com/code/bigironsphere/loss-function-library-keras-pytorch
 """
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class DiceLoss(nn.Module):
