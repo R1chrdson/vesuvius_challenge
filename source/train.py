@@ -1,7 +1,6 @@
 import numpy as np
 from sklearn.model_selection import KFold
-from torch.nn import BCELoss
-from torch.optim import Adam
+from torch.optim import AdamW
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torchmetrics import MetricCollection
 from torchmetrics.classification import BinaryAccuracy, BinaryFBetaScore
@@ -90,7 +89,7 @@ def test_epoch(data_loader, model, criterion, metrics):
 def fit_model(train_loader, test_loader, comment=""):
     model = MODELS[Config.MODEL]["model"]().to(Config.DEVICE)
     criterion = LOSSES[Config.LOSS]()
-    optimizer = Adam(model.parameters(), lr=Config.LEARNING_RATE, weight_decay=Config.WEIGHT_DECAY)
+    optimizer = AdamW(model.parameters(), lr=Config.LEARNING_RATE, weight_decay=Config.WEIGHT_DECAY)
     early_stopping = EarlyStopping(patience=Config.PATIENCE, verbose=True)
 
     metrics = MetricCollection([

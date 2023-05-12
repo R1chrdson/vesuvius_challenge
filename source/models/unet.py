@@ -26,10 +26,12 @@ class DownBlock(nn.Module):
         super(DownBlock, self).__init__()
         self.double_conv = DoubleConv(in_channels, out_channels)
         self.down_sample = nn.MaxPool2d(2)
+        self.dropout = nn.Dropout(p=Config.DROPOUT)
 
     def forward(self, x):
         skip_out = self.double_conv(x)
         down_out = self.down_sample(skip_out)
+        down_out = self.dropout(down_out)
         return (down_out, skip_out)
 
 class UpBlock(nn.Module):
