@@ -14,6 +14,7 @@ class EffNet:
         model = build_efficient_net_model(version, fine_tune)
 
         in_features = {
+            'b0': 1280,
             'b1': 1280,
             'b2': 1408,
             'b3': 1536,
