@@ -15,6 +15,6 @@ MODELS = {
     },
     "EffNet": {
         "model": EffNet,
-        "dataset": EffNetVesuviusDataset,
+        "dataset": VesuviusOriginalDataSet,
     }
 }
