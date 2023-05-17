@@ -14,3 +14,14 @@ class ResNet34Unet(smp.Unet):
         classes=1,
         activation=nn.Sigmoid,
     )
+
+
+class ResNet50Unet(smp.Unet):
+    def __init__(self):
+        super().__init__(
+        encoder_name="resnet50",
+        encoder_weights="imagenet",
+        in_channels=Config.Z_NUMBER,
+        classes=1,
+        activation=nn.Sigmoid,
+    )
