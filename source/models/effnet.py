@@ -33,7 +33,7 @@ class EffNet:
             nn.Dropout(p=Config.DROPOUT),
             nn.Linear(in_features=out_features_first, out_features=320),
             nn.ReLU(),
-            nn.Linear(in_features=320, out_features=2),
+            nn.Linear(in_features=320, out_features=1),
         )
 
         return model

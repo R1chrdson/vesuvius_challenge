@@ -181,6 +181,7 @@ class EffNetVesuviusDataset(VesuviusOriginalDataSet):
             voxels_data[:, i, :, :] = self._split_slice(slice_data, masked_idxs)
 
         labels_data = self._split_slice(labels_img, masked_idxs)
+        labels_data = labels_data.mean(axis=(1, 2)) > 0.5
         return voxels_data, labels_data
 
     def __getitem__(self, index):
