@@ -42,5 +42,9 @@ MODELS = {
     "EffNet": {
         "model": EffNet,
         "dataset": EffNetVesuviusDataset,
+    },
+    "EffNetB0Unet": {
+        "model": EffNet,
+        "dataset": UnetVesuviusDataset,
     }
 }
