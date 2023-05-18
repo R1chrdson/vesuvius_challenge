@@ -34,6 +34,7 @@ class EffNet:
             nn.Linear(in_features=out_features_first, out_features=320),
             nn.ReLU(),
             nn.Linear(in_features=320, out_features=1),
+            nn.Sigmoid(),
         )
 
         return model
