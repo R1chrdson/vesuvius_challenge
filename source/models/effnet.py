@@ -6,11 +6,21 @@ from source.helpers.config import Config
 
 # ================= EfficientNet ========================
 
-class EffNetB0Unet(smp.Unet):
+class EffNetBXUnetImagenetPretrained(smp.Unet):
     def __init__(self):
         super().__init__(
-        encoder_name="efficientnet-b0",
+        encoder_name="efficientnet-" + Config.EFFNET_VERSION,
         encoder_weights="imagenet",
+        in_channels=Config.Z_NUMBER,
+        classes=1,
+        activation=nn.Sigmoid,
+    )
+
+class EffNetBXUnetNoPretrain(smp.Unet):
+    def __init__(self):
+        super().__init__(
+        encoder_name="efficientnet-" + Config.EFFNET_VERSION,
+        encoder_weights=None,
         in_channels=Config.Z_NUMBER,
         classes=1,
         activation=nn.Sigmoid,

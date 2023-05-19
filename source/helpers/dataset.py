@@ -163,6 +163,22 @@ class UnetVesuviusDataset(VesuviusOriginalDataSet):
 
 
 class EffNetVesuviusDataset(VesuviusOriginalDataSet):
+    def _get_model_image_size(self):
+        img_size = {
+            'b0': 224,
+            'b1': 240,
+            'b2': 260,
+            'b3': 300,
+            'b4': 380,
+            'b5': 456,
+            'b6': 528,
+            'b7': 600
+        }
+
+        size = img_size[Config.EFFNET_VERSION]
+
+        return size, size
+
     def _load_fragment(self, fragment_path: Path):
         slice_paths = sorted(list((fragment_path / "surface_volume").glob("*.tif")))
         slice_paths = filter(is_slice_to_load, slice_paths)
