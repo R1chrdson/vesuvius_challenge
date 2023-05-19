@@ -2,7 +2,7 @@ from source.models.example_model import InkDetector
 from source.models.unet import UNet
 from source.models.pvt import PVTTiny, PVTSmall, PVTMedium, PVTLarge
 from source.models.resnet import ResNet34Unet, ResNet50Unet
-from source.models.effnet import EffNet, EffNetB0Unet
+from source.models.effnet import EffNet, EffNetBXUnetImagenetPretrained, EffNetBXUnetNoPretrain
 
 from source.helpers.dataset import VesuviusOriginalDataSet, UnetVesuviusDataset, EffNetVesuviusDataset
 
@@ -43,8 +43,12 @@ MODELS = {
         "model": EffNet,
         "dataset": EffNetVesuviusDataset,
     },
-    "EffNetB0Unet": {
-        "model": EffNetB0Unet,
+    "EffNetBXUnetImagenetPretrained": {
+        "model": EffNetBXUnetImagenetPretrained,
+        "dataset": UnetVesuviusDataset,
+    },
+    "EffNetBXUnetNoPretrain": {
+        "model": EffNetBXUnetNoPretrain,
         "dataset": UnetVesuviusDataset,
     }
 }
