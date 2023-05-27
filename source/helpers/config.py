@@ -46,6 +46,8 @@ class AppConfig:
     BATCH_SIZE: int
     EPOCHS: int
     MODEL: str
+    EFFNET_VERSION: str = 'b0'
+    EFFNET_FINE_TUNE: int = 0
     WEIGHT_DECAY: float
     LEARNING_RATE: float
     DROPOUT: float
